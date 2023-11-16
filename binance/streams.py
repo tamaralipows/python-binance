@@ -88,6 +88,7 @@ class ReconnectingWebsocket:
         try:
             self.ws = await self._conn.__aenter__()
         except:  # noqa
+            self._log.info(f"{self._path} exception caught. Reconnecting.")
             await self._reconnect()
             return
         self.ws_state = WSListenerState.STREAMING
@@ -99,6 +100,7 @@ class ReconnectingWebsocket:
 
     async def _kill_read_loop(self):
         self.ws_state = WSListenerState.EXITING
+        self._log.info(f"_kill_read_loop called for {self._path}")
         while self._handle_read_loop:
             self._log.info("Handle read loop while in _kill_read_loop")
             await sleep(0.1)
@@ -132,9 +134,11 @@ class ReconnectingWebsocket:
                         self._log.info(f"_read_loop {self._path} break for {self.ws_state}")
                         break
                     elif self.ws.state == ws.protocol.State.CLOSING:  # type: ignore
+                        self._log.info(f"_read_loop {self._path} closing for {self.ws_state}")
                         await asyncio.sleep(0.1)
                         continue
                     elif self.ws.state == ws.protocol.State.CLOSED:  # type: ignore
+                        self._log.info(f"_read_loop {self._path} closed for {self.ws_state}")
                         await self._reconnect()
                     elif self.ws_state == WSListenerState.STREAMING:
                         assert self.ws
@@ -170,6 +174,7 @@ class ReconnectingWebsocket:
                     continue
         finally:
             self._handle_read_loop = None  # Signal the coro is stopped
+            self._log.info(f"Coro {self._path} has stopped.")
             self._reconnects = 0
 
     async def _run_reconnect(self):
