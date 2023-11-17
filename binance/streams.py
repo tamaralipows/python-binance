@@ -87,7 +87,7 @@ class ReconnectingWebsocket:
         self._conn = ws.connect(ws_url, close_timeout=0.1)  # type: ignore
         try:
             self.ws = await self._conn.__aenter__()
-        except:  # noqa
+        except Exception:  # noqa
             self._log.info(f"{self._path} exception caught. Reconnecting.")
             await self._reconnect()
             return
