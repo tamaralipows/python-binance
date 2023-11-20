@@ -81,6 +81,7 @@ class ReconnectingWebsocket:
             await self._kill_read_loop()
 
     async def connect(self):
+        self._log.info(f"{self._path} - connect called.")
         await self._before_connect()
         assert self._path
         ws_url = self._url + self._prefix + self._path
@@ -96,13 +97,13 @@ class ReconnectingWebsocket:
         await self._after_connect()
         # To manage the "cannot call recv while another coroutine is already waiting for the next message"
         if not self._handle_read_loop:
+            self._log.info(f"{self._path} call_soon_threadsafe called.")
             self._handle_read_loop = self._loop.call_soon_threadsafe(asyncio.create_task, self._read_loop())
 
     async def _kill_read_loop(self):
         self.ws_state = WSListenerState.EXITING
-        self._log.info(f"_kill_read_loop called for {self._path}")
         while self._handle_read_loop:
-            self._log.info("Handle read loop while in _kill_read_loop")
+            self._log.info(f"{self._path} Handle read loop while in _kill_read_loop")
             await sleep(0.1)
 
     async def _before_connect(self):
@@ -124,23 +125,26 @@ class ReconnectingWebsocket:
             return None
 
     async def _read_loop(self):
+        self._log.info(f"_read_loop started for symbol {self._path}")
         try:
             while True:
                 try:
                     while self.ws_state == WSListenerState.RECONNECTING:
+                        self._log.info(f"_read_loop {self._path} reconnecting.")
                         await self._run_reconnect()
 
                     if self.ws_state == WSListenerState.EXITING:
                         self._log.info(f"_read_loop {self._path} break for {self.ws_state}")
                         break
                     elif self.ws.state == ws.protocol.State.CLOSING:  # type: ignore
-                        self._log.info(f"_read_loop {self._path} closing for {self.ws_state}")
+                        self._log.info(f"_read_loop {self._path} closing.")
                         await asyncio.sleep(0.1)
                         continue
                     elif self.ws.state == ws.protocol.State.CLOSED:  # type: ignore
-                        self._log.info(f"_read_loop {self._path} closed for {self.ws_state}")
+                        self._log.info(f"_read_loop {self._path} closed. Reconnecting.")
                         await self._reconnect()
                     elif self.ws_state == WSListenerState.STREAMING:
+                        self._log.info(f"_read_loop {self._path} streaming.")
                         assert self.ws
                         res = await asyncio.wait_for(self.ws.recv(), timeout=self.TIMEOUT)
                         res = self._handle_message(res)
