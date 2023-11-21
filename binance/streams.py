@@ -144,7 +144,6 @@ class ReconnectingWebsocket:
                         self._log.info(f"_read_loop {self._path} closed. Reconnecting.")
                         await self._reconnect()
                     elif self.ws_state == WSListenerState.STREAMING:
-                        self._log.info(f"_read_loop {self._path} streaming.")
                         assert self.ws
                         res = await asyncio.wait_for(self.ws.recv(), timeout=self.TIMEOUT)
                         res = self._handle_message(res)
