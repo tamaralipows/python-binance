@@ -206,6 +206,10 @@ class ReconnectingWebsocket:
                 res = await asyncio.wait_for(self._queue.get(), timeout=self.TIMEOUT)
             except asyncio.TimeoutError:
                 self._log.info(f"{self._path} recv no message in {self.TIMEOUT} seconds")
+
+            # Yield control to the event loop
+            await asyncio.sleep(0)
+
         return res
 
     async def _wait_for_reconnect(self):
