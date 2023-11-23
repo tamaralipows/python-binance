@@ -162,7 +162,7 @@ class ReconnectingWebsocket:
                     # _no_message_received_reconnect
                 except asyncio.CancelledError as e:
                     self._log.info(f"{self._path} cancelled error {e}")
-                    break
+                    raise e
                 except asyncio.IncompleteReadError as e:
                     self._log.info(f"incomplete read error ({e})")
                 except ConnectionClosedError as e:
