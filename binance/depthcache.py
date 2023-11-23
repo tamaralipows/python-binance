@@ -182,7 +182,7 @@ class BaseDepthCacheManager:
             try:
                 res = await asyncio.wait_for(self._socket.recv(), timeout=self.TIMEOUT)
             except Exception as e:
-                self._log.warning(e)
+                self._log.warning(f"An exception occurred: {e}", exc_info=True)
             else:
                 dc = await self._depth_event(res)
         return dc
