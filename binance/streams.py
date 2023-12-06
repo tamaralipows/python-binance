@@ -130,18 +130,15 @@ class ReconnectingWebsocket:
             while True:
                 try:
                     while self.ws_state == WSListenerState.RECONNECTING:
-                        self._log.debug(f"_read_loop {self._path} reconnecting.")
                         await self._run_reconnect()
 
                     if self.ws_state == WSListenerState.EXITING:
                         self._log.debug(f"_read_loop {self._path} break for {self.ws_state}")
                         break
                     elif self.ws.state == ws.protocol.State.CLOSING:  # type: ignore
-                        self._log.debug(f"_read_loop {self._path} closing.")
                         await asyncio.sleep(0.1)
                         continue
                     elif self.ws.state == ws.protocol.State.CLOSED:  # type: ignore
-                        self._log.debug(f"_read_loop {self._path} closed. Reconnecting.")
                         await self._reconnect()
                     elif self.ws_state == WSListenerState.STREAMING:
                         assert self.ws
@@ -177,7 +174,6 @@ class ReconnectingWebsocket:
                     continue
         finally:
             self._handle_read_loop = None  # Signal the coro is stopped
-            self._log.debug(f"Coro {self._path} has stopped.")
             self._reconnects = 0
 
     async def _run_reconnect(self):
@@ -227,11 +223,9 @@ class ReconnectingWebsocket:
         self._reconnects += 1
 
     def _no_message_received_reconnect(self):
-        self._log.debug(f'{self._path} No message received, reconnecting')
         self.ws_state = WSListenerState.RECONNECTING
 
     async def _reconnect(self):
-        self._log.debug(f"{self._path} Reconnecting in _reconnect")
         self.ws_state = WSListenerState.RECONNECTING
 
 
