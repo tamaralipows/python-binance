@@ -81,7 +81,6 @@ class ReconnectingWebsocket:
             await self._kill_read_loop()
 
     async def connect(self):
-        self._log.debug(f"{self._path} - connect called.")
         await self._before_connect()
         assert self._path
         ws_url = self._url + self._prefix + self._path
@@ -97,13 +96,11 @@ class ReconnectingWebsocket:
         await self._after_connect()
         # To manage the "cannot call recv while another coroutine is already waiting for the next message"
         if not self._handle_read_loop:
-            self._log.debug(f"{self._path} call_soon_threadsafe called.")
             self._handle_read_loop = self._loop.call_soon_threadsafe(asyncio.create_task, self._read_loop())
 
     async def _kill_read_loop(self):
         self.ws_state = WSListenerState.EXITING
         while self._handle_read_loop:
-            self._log.debug(f"{self._path} Handle read loop while in _kill_read_loop")
             await sleep(0.1)
 
     async def _before_connect(self):
@@ -280,11 +277,11 @@ class KeepAliveWebsocket(ReconnectingWebsocket):
         try:
             listen_key = await self._get_listen_key()
             if listen_key != self._path:
-                self._log.info("listen key changed: reconnect")
+                self._log.debug("listen key changed: reconnect")
                 self._path = listen_key
                 await self._reconnect()
             else:
-                self._log.info("listen key same: keepalive")
+                self._log.debug("listen key same: keepalive")
                 if self._keepalive_type == 'user':
                     await self._client.stream_keepalive(self._path)
                 elif self._keepalive_type == 'margin':  # cross-margin
